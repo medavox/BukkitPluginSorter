@@ -189,13 +189,14 @@ public class BukkitPluginSorter implements Runnable
                         "-"+(n-PROJECTS_PER_PAGE)+")");
                     for(int i = 0; i < projs.size(); i++)
                     {
-                        projects[n] = new Project();
-                        projects[n].name = projs.get(i).text();
-                        projects[n].link = projs.get(i).getElementsByTag("a").attr("href");
-                        if(getSummaries)
+                        projects[n] = new Project();//initialise
+                        projects[n].name = projs.get(i).text();//store name
+                        projects[n].link = projs.get(i).getElementsByTag("a").attr("href");//store link
+                        if(getSummaries)//optionally store summaries
 						{projects[n].description = descs.get(i).ownText();}
-                        
-                        o.println(n+":\t"+projects[n].name);
+						
+                        //prints 20 lines per results page, a bit much
+                        //o.println(n+":\t"+projects[n].name);
                         n++;
                     }
                     pagesDone++;
@@ -207,15 +208,14 @@ public class BukkitPluginSorter implements Runnable
                 System.err.println(e.getClass()+" in thread "+threadNum+":");
                 lazyExceptionHandler(e);
             }
-            
         }
     }
     //begin getting projects: their names, number, descriptions and links    
     public void getProjectEntries(String url)
     {
         Thread[] threads = new Thread[NUM_THREADS];
-        o.println("about to make "+NUM_THREADS+" threads...");
-        doingDownloads = false;
+        //o.println("about to make "+NUM_THREADS+" threads...");
+        doingDownloads = false;//we're doing the other thing
         for(int i = 0; i < NUM_THREADS; i++)
         {
             threads[i] = new Thread(this);
@@ -223,8 +223,8 @@ public class BukkitPluginSorter implements Runnable
         }
         for(int i = 0; i < NUM_THREADS; i++)
         {
-            try
-            {
+            try//wait until all threads have proceeded before continuing to the next step
+            {//prevents the next method trying to process data that isn't there yet
                 threads[i].join();
             }
             catch(InterruptedException e)
@@ -245,8 +245,8 @@ public class BukkitPluginSorter implements Runnable
         }
         for(int i = 0; i < NUM_THREADS; i++)
         {
-            try
-            {
+            try//wait until all threads have proceeded before continuing to the next step
+            {//prevents the next method trying to process data that isn't there yet
                 threads[i].join();
             }
             catch(InterruptedException e)
@@ -255,7 +255,13 @@ public class BukkitPluginSorter implements Runnable
             }
         }
     }
-    
+    /**Provides the correct number of spaces to make equal-width columns
+     * @param stringToSpace the column left of the spaces
+     * @param charsFromStringStart the desired spacing
+     * charsFromDesiredSpacing measures from the first character of the left 
+     * column, to the first character of the right column, so its value should be
+     * at least as large as the length of the largest left column entry.
+     * @return the spaces to insert between the two columns*/
     private String getSpacing(String stringToSpace, int charsFromStringStart)
     {
         int numSpaces = charsFromStringStart - stringToSpace.length();
@@ -266,7 +272,11 @@ public class BukkitPluginSorter implements Runnable
         {spacing += " ";}
         return spacing;
     }
-    
+    /**Escapes non-HTML-safe characters from a string.
+     * @param in the String to escape characters from
+     see https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content
+     @return the String with all the offending characters replace with &these;.
+     * */
     private String escapeChars(String in)
     {
         String out = in.replace("&", "&amp;");
@@ -276,14 +286,19 @@ public class BukkitPluginSorter implements Runnable
         out = out.replace("'", "&#39;");
         return out.replace("/", "&#47;");
     }
-    
+    /**Returns a string representing the moment (minute-precision) that the method was called.
+     @return String of the form "<short time format> at <FULL date format>*/
     private String now()
     {
         String time = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date());
         String date = DateFormat.getDateInstance(DateFormat.FULL).format(new Date());
         return time+" on "+date;
     }
-    
+    /**Generates the HTML output, creating a table with names(as links) and downloads.
+     * Optionally also provides summaries, and categories(TODO).
+     * @param projs The main list of projects used throughout this program
+     * @param projStageList a pretty-print string naming the stage we're listing, eg. "Mature"
+     * @return an HTML document as a String, for writing to a file*/
     private String generateHTML(Project[] projs, String projStageList)
     {
         String html = "<!DOCTYPE html>\n<html><head><title>"+projStageList+
@@ -311,7 +326,11 @@ public class BukkitPluginSorter implements Runnable
         }
         return html;
     }
-    
+    /**Descending-order quicksort implementation. Uses download value of each Project
+     * to sort by.
+     * @param projs The main list of projects used throughout this program
+     * @param low The index at which to start sorting
+     * @param high The index at which to end sorting  */
     public static void quickSort (Project[] projs, int low, int high)
 	{
 		int i=low;
@@ -348,17 +367,26 @@ public class BukkitPluginSorter implements Runnable
 			quickSort(projs, i, high);
 		}
 	}
-    
+    /**Handles pretty much all exceptions thrown by this program.
+     * Prints the error type, its message, and a stack trace to the standard error
+     * stream, then exits the program with an error code of 1.
+     * Some Exception catchers print some more specific information, then call this;
+     * most just come straight here.
+     * An exception (ha) to this generalisation is that SocketTimeoutExceptions 
+     * and IOExceptions are consumed by the object attempting to get a webpage, 
+     * and the method is retried until it succeeds (due to the unpredictable nature
+     * of internet connections).
+     * @param e The Exception we're lazily handling*/
     private static void lazyExceptionHandler(Exception e)
     {
-        System.err.println("Oh no! Some sort of error! fuck it, just dump it and exit.");
+        System.err.println("Oh no! Some sort of error! meh, just dump it and exit.");
         System.err.println(e.getClass());
         System.err.println(e);
         System.err.println(e.getMessage());
         e.printStackTrace();
         System.exit(1);
     }
-
+	/**Provides the total number of projects*/
     public static int getNumEntries(String url)
     {
         try
@@ -370,7 +398,7 @@ public class BukkitPluginSorter implements Runnable
         catch(Exception e)
         {
             lazyExceptionHandler(e);
-            return -1;
+            return -1;//pointless, but prevents java complaining about a lack of return statement
         }
     }
     private class Project
