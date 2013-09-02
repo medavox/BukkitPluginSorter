@@ -13,7 +13,15 @@ import java.util.Date;
 /**Script to sort a list of plugins from dev.bukkit.org by number of downloads.
  * Prints the output in an HTML table.
  * @author Adam Howard (http://medavox.com)
- * @version 3 - now with threaded httpRequests, to parallelise blocking methods*/
+ * @version 4 - added categories*/
+ //TODO:categories
+ //more commandline options
+    //number of threads
+    //timeout
+    //whether to retrieve categories
+    //whether to retrieve summaries
+ //differential updating: saving results and only adding new stuff
+    //(or at least skipping the initial step if there're still the same number of results, 
 public class HTMLTime implements Runnable
 {
     private PrintStream o = System.out;//makes printing shorter to type
@@ -25,6 +33,7 @@ public class HTMLTime implements Runnable
     private static final int TIMEOUT = 10000;
     private final int PROJECTS_PER_PAGE = 20;//number of project results per page
     private final int NUM_THREADS = 12;
+    private boolean getSummaries = false;
     
     //'arguments' for threads
     private int numEntries;//actual number of projects
@@ -141,13 +150,15 @@ public class HTMLTime implements Runnable
                 int pagesDone = 0;
                 for(int h = threadNum; h <= numPages; h+=NUM_THREADS)
                 {
+                    //keep trying to download the page until successful,
+                    //retrying on SocketTimeoutException or IOException
                     while(true)
                     {
                         try
                         {
                             boday = Jsoup.connect(url + "&page="+h)
                             .timeout(TIMEOUT).userAgent(USER_AGENT).get().body();
-                            break;
+                            break;//downloaded successfully; exit loop
                         }
                         catch(SocketTimeoutException stoe)
                         {
@@ -167,8 +178,8 @@ public class HTMLTime implements Runnable
                     projs.remove(0);//remove the table header
                     projs.remove(0);//remove the table header
                     int n = (h * PROJECTS_PER_PAGE) - PROJECTS_PER_PAGE;//iterator over all projects on all pages
-                    o.println("Thread "+threadNum+" starting page "+h+" at "+n+
-                        "-"+(n-PROJECTS_PER_PAGE));
+                    o.println("Thread "+threadNum+" starting page "+h+" ("+n+
+                        "-"+(n-PROJECTS_PER_PAGE)+")");
                     for(int i = 0; i < projs.size(); i++)
                     {
                         projects[n] = new Project();
@@ -254,8 +265,8 @@ public class HTMLTime implements Runnable
         out = out.replace("<","&lt;");
         out = out.replace(">", "&gt;");
         out = out.replace("\"", "&quot;");
-        out = out.replace("'", "&#x27;");
-        return out.replace("/", "&#x2F;");
+        out = out.replace("'", "&#39;");
+        return out.replace("/", "&#47;");
     }
     
     private String now()
@@ -265,12 +276,12 @@ public class HTMLTime implements Runnable
         return time+" on "+date;
     }
     
-    private String generateHTML(Project[] projs, String projStatusList)
+    private String generateHTML(Project[] projs, String projStageList)
     {
-        String html = "<!DOCTYPE html>\n<html><head><title>"+projStatusList+
-            "-Status Bukkit Plugins Sorted By Downloads</title></head>"+
+        String html = "<!DOCTYPE html>\n<html><head><title>"+projStageList+
+            "-Stage Bukkit Plugins Sorted By Downloads</title></head>"+
             "\n<body><h1>Bukkit Plugins sorted by Downloads</h1><h2>Showing "
-            +projStatusList+" Projects</h2><p>Generated at "+now()+"</p><table border=\"1\">"+
+            +projStageList+"-Stage Projects</h2><p>Generated at "+now()+"</p><table border=\"1\">"+
             "\n<tr><th>Name</th><th>Downloads</th><th>Summary</th></tr>";
         if(projs.length==1)
         {
@@ -359,6 +370,7 @@ public class HTMLTime implements Runnable
         public String description;
         public String link;
         public int downloads;
+        public String[] categories;
     }
     
     public static void main(String[] args)
