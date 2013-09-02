@@ -185,7 +185,8 @@ public class BukkitPluginSorter implements Runnable
                         projects[n] = new Project();
                         projects[n].name = projs.get(i).text();
                         projects[n].link = projs.get(i).getElementsByTag("a").attr("href");
-                        projects[n].description = descs.get(i).ownText();
+                        if(getSummaries)
+						{projects[n].description = descs.get(i).ownText();}
                         
                         o.println(n+":\t"+projects[n].name);
                         n++;
@@ -282,7 +283,7 @@ public class BukkitPluginSorter implements Runnable
             "-Stage Bukkit Plugins Sorted By Downloads</title></head>"+
             "\n<body><h1>Bukkit Plugins sorted by Downloads</h1><h2>Showing "
             +projStageList+"-Stage Projects</h2><p>Generated at "+now()+"</p><table border=\"1\">"+
-            "\n<tr><th>Name</th><th>Downloads</th><th>Summary</th></tr>";
+            "\n<tr><th>Name</th><th>Downloads</th>"+(getSummaries ? "<th>Summary</th>" : "")+"</tr>";
         if(projs.length==1)
         {
             System.err.println("did not successfully get list of projects!");
@@ -296,7 +297,8 @@ public class BukkitPluginSorter implements Runnable
                 BASEDIR+projs[i].link+
                 "\">"+projs[i].name+"</a></td><td>"+
                 NumberFormat.getNumberInstance().format(projs[i].downloads)+
-                "</td><td>"+escapeChars(projs[i].description)+"</td></tr>";
+                "</td>"+
+                (getSummaries ? "<td>"+escapeChars(projs[i].description)+"</td>":"")+"</tr>";
             }
             html += "</table></body></html>";
         }

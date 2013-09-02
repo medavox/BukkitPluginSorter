@@ -18,7 +18,9 @@ javac -cp jsoup-1.7.2.jar:. BukkitPluginSorter.java
 Running
 =======
 to get a list of mature-stage projects sorted by downloads:
+
 java -cp jsoup-1.7.2.jar:. BukkitPluginSorter m
 
 to get a list of release-stage projects sorted by downloads (warning: very slow, takes about 30 minutes to get ~6800 plugins due to bukkit's site)
+
 java -cp jsoup-1.7.2.jar:. BukkitPluginSorter m
