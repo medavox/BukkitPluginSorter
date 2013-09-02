@@ -10,11 +10,9 @@ import java.text.NumberFormat;
 import java.text.DateFormat;
 import java.util.Date;
 
-/**Script to sort a list of plugins from dev.bukkit.org by number of downloads.
- * Prints the output in an HTML table.
- * @author Adam Howard (http://medavox.com)
- * @version 4 - added categories*/
+
  //TODO:categories
+ //documentation/comments
  //more commandline options
     //number of threads
     //timeout
@@ -22,6 +20,11 @@ import java.util.Date;
     //whether to retrieve summaries
  //differential updating: saving results and only adding new stuff
     //(or at least skipping the initial step if there're still the same number of results, 
+ /**Script to sort a list of plugins from dev.bukkit.org by number of downloads.
+ * Prints the output in an HTML table.
+ * PS for anyone else reading this, I tend to use poorly-spelled variable names to indicate temporary status
+ * @author Adam Howard (http://medavox.com)
+ * @version 4 - added categories*/
 public class BukkitPluginSorter implements Runnable
 {
     private PrintStream o = System.out;//makes printing shorter to type
@@ -29,10 +32,16 @@ public class BukkitPluginSorter implements Runnable
     private static final String MATURE  = BASEDIR+"/bukkit-plugins/?stage=m";
     private static final String RELEASE = BASEDIR+"/bukkit-plugins/?stage=r";
     private static final String BETA = BASEDIR+"/bukkit-plugins/?stage=r";
-    private static final String USER_AGENT = "BukkitPluginSorter - a workaround script to sort bukkit plugins by downloads";//let them know my name! hopefully they will take this hint to redesign the website to avoid my unnecessary bandwidth usage
+    
+    /**let them know my name! hopefully they will take this hint to redesign the website to avoid my bandwidth bombing*/
+    private static final String USER_AGENT = "BukkitPluginSorter - a workaround script to sort bukkit plugins by downloads";
+    /**milliseconds before a page request times out. Not as important now I've implemented retries*/
     private static final int TIMEOUT = 10000;
-    private final int PROJECTS_PER_PAGE = 20;//number of project results per page
+    /**Number of project results per page. Just a magic number due to their site design.*/
+    private final int PROJECTS_PER_PAGE = 20;
+    /**Number of parallel page requests, for both processes*/
     private final int NUM_THREADS = 12;
+    /**does run() get the project names and number, or the number of downloads?*/
     private boolean getSummaries = false;
     
     //'arguments' for threads
@@ -44,14 +53,13 @@ public class BukkitPluginSorter implements Runnable
     
     public BukkitPluginSorter(String releaseURL, String releasePrettyName)
     {
-        numEntries = getNumEntries(releaseURL);
-        url = releaseURL;
-        //string must be a bukkit plugin list url
-        o.println("execute getProjectEntries...");
-        getProjectEntries(releaseURL);//get names, links and descriptions THREADED
+        numEntries = getNumEntries(releaseURL);//total number of projects
+        url = releaseURL;//thread 'argument': passes the URL we parse later
+        o.println("getting project entries...");
+        getProjectEntries(releaseURL);//get names, links and descriptions - THREADED
         
-        o.println("execute getNumDownloads...");
-        getNumDownloads();//get num downloads -- NOW THREADED
+        o.println("getting Number of Downloads...");
+        getNumDownloads();//get num downloads - THREADED!
         o.println("sorting...");
         quickSort(projects, 0, projects.length-1);//sort results
         String output = generateHTML(projects, releasePrettyName);
@@ -84,18 +92,18 @@ public class BukkitPluginSorter implements Runnable
         {
             lastThread = 0;
         }
-        if(doingDownloads)
-        {
+        if(doingDownloads)//getting number of downloads value,
+        {//from each individual project page
             o.println("Download Number Thread "+threadNum+" started");
-            int pagesDone = 0;
-            for(int i = threadNum-1; i < projects.length; i+=NUM_THREADS)
+            int pagesDone = 0;//counts work done per thread
+            for(int i = threadNum-1; i < projects.length; i+=NUM_THREADS)//splits work between threads
             {
-                Element bawdy;
-                while(true)
-                {
+                Element body;
+                while(true)//keep trying to download the page until successful,
+                {//retrying on SocketTimeoutException or IOException
                     try
                     {
-                        bawdy = Jsoup.connect(BASEDIR + projects[i].link)
+                        body = Jsoup.connect(BASEDIR + projects[i].link)
                             .timeout(TIMEOUT)
                             .userAgent(USER_AGENT)
                             .get()
@@ -117,7 +125,7 @@ public class BukkitPluginSorter implements Runnable
                 }
                 try
                 {
-                    Elements donluds = bawdy.getElementsByAttribute("data-value");
+                    Elements donluds = body.getElementsByAttribute("data-value");
                     projects[i].downloads = Integer.parseInt(donluds.get(0).attr("data-value"));
                 }
                 catch(Exception e)
@@ -125,7 +133,7 @@ public class BukkitPluginSorter implements Runnable
                     System.err.println(e.getClass()+" in thread "+threadNum+":");
                     lazyExceptionHandler(e);
                 }
-                //receive the majesty of my fixed-width column printouts
+                //behold the majesty of my fixed-width column printouts
                 o.println(i+"/"+(projects.length-1)+":"+
                 getSpacing(i+"/"+(projects.length-1), 10)+
                 projects[i].name+
@@ -150,8 +158,7 @@ public class BukkitPluginSorter implements Runnable
                 int pagesDone = 0;
                 for(int h = threadNum; h <= numPages; h+=NUM_THREADS)
                 {
-                    //keep trying to download the page until successful,
-                    //retrying on SocketTimeoutException or IOException
+                    
                     while(true)
                     {
                         try
