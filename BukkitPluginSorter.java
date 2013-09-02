@@ -22,14 +22,14 @@ import java.util.Date;
     //whether to retrieve summaries
  //differential updating: saving results and only adding new stuff
     //(or at least skipping the initial step if there're still the same number of results, 
-public class HTMLTime implements Runnable
+public class BukkitPluginSorter implements Runnable
 {
     private PrintStream o = System.out;//makes printing shorter to type
     private static final String BASEDIR = "http://dev.bukkit.org";
     private static final String MATURE  = BASEDIR+"/bukkit-plugins/?stage=m";
     private static final String RELEASE = BASEDIR+"/bukkit-plugins/?stage=r";
     private static final String BETA = BASEDIR+"/bukkit-plugins/?stage=r";
-    private static final String USER_AGENT = "HTMLTime - a workaround script to sort bukkit plugins by downloads";//let them know my name! hopefully they will take this hint to redesign the website to avoid my unnecessary bandwidth usage
+    private static final String USER_AGENT = "BukkitPluginSorter - a workaround script to sort bukkit plugins by downloads";//let them know my name! hopefully they will take this hint to redesign the website to avoid my unnecessary bandwidth usage
     private static final int TIMEOUT = 10000;
     private final int PROJECTS_PER_PAGE = 20;//number of project results per page
     private final int NUM_THREADS = 12;
@@ -42,7 +42,7 @@ public class HTMLTime implements Runnable
     private boolean doingDownloads = true;//false:populate projects array; true:get their download numbers
     private String url;//the url 'argument' passed to the getProjectEntries threads
     
-    public HTMLTime(String releaseURL, String releasePrettyName)
+    public BukkitPluginSorter(String releaseURL, String releasePrettyName)
     {
         numEntries = getNumEntries(releaseURL);
         url = releaseURL;
@@ -379,34 +379,34 @@ public class HTMLTime implements Runnable
         {
             System.out.println("arg "+i+": "+args[i]);
         }
-        HTMLTime bukkitParser;
+        BukkitPluginSorter bukkitParser;
         if(args.length >0)
         {
             if(args[0].equals("m"))
             {
                 System.out.println("Getting MATURE...");
-                bukkitParser = new HTMLTime(MATURE, "Mature");
+                bukkitParser = new BukkitPluginSorter(MATURE, "Mature");
             }
             else if (args[0].equals("r"))
             {
                 System.out.println("Getting RELEASE...");
-                bukkitParser = new HTMLTime(RELEASE, "Release");
+                bukkitParser = new BukkitPluginSorter(RELEASE, "Release");
             }
             else if (args[0].equals("b"))
             {
                 System.out.println("Getting BETA...");
-                bukkitParser = new HTMLTime(BETA, "Beta");
+                bukkitParser = new BukkitPluginSorter(BETA, "Beta");
             }
             else
             {
                 System.out.println("No valid argument given, assuming MATURE!\nGetting MATURE...");
-                bukkitParser = new HTMLTime(MATURE, "Mature");
+                bukkitParser = new BukkitPluginSorter(MATURE, "Mature");
             }
         }
         else
         {
             System.out.println("No argument given, assuming MATURE!\nGetting MATURE...");
-            bukkitParser = new HTMLTime(MATURE, "Mature");
+            bukkitParser = new BukkitPluginSorter(MATURE, "Mature");
         }
     }
 }
