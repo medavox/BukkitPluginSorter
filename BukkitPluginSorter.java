@@ -43,6 +43,7 @@ public class BukkitPluginSorter implements Runnable
     private final int NUM_THREADS = 30;
     /**does run() get the project names and number, or the number of downloads?*/
     private boolean getSummaries = false;
+    private boolean getCategories = false;
     
     //'arguments' for threads
     private int numEntries;//actual number of projects

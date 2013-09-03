@@ -6,9 +6,9 @@ Sorts Bukkit plugins by number of downloads.
 Outputs a basic html table in a file named after the plugin stage it scans.
 eg for listing mature releases, it produces Mature.html
 
-*Uses jsoup to get and manipulate the html
+*  Uses jsoup to get and manipulate the html
 
-*uses threads to parallellise (and therefore speed up from a crawl) the retrieval of pages.
+*  uses threads to parallellise (and therefore speed up from a crawl) the retrieval of pages.
 
 Requires JSoup 1.7.2 and JDK 1.6 (uses 1.6's File class for hard disk io, which is redesigned in 1.7)
 
