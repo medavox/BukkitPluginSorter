@@ -40,7 +40,7 @@ public class BukkitPluginSorter implements Runnable
     /**Number of project results per page. Just a magic number due to their site design.*/
     private final int PROJECTS_PER_PAGE = 20;
     /**Number of parallel page requests, for both processes*/
-    private final int NUM_THREADS = 12;
+    private final int NUM_THREADS = 30;
     /**does run() get the project names and number, or the number of downloads?*/
     private boolean getSummaries = false;
     
@@ -146,7 +146,7 @@ public class BukkitPluginSorter implements Runnable
                 o.println(i+"/"+(projects.length-1)+":"+
                 getSpacing(i+"/"+(projects.length-1), 10)+
                 projects[i].name+
-                getSpacing(projects[i].name, 32)+
+                getSpacing(projects[i].name, 30)+
                 projects[i].downloads);
                 pagesDone++;
             }
@@ -188,13 +188,12 @@ public class BukkitPluginSorter implements Runnable
                                 +h+"; trying again...");
                         }
                     }
-                    o.println("page "+h+"/"+numPages);
                     projs = boday.getElementsByClass("col-project");
                     descs = boday.getElementsByClass("summary");
                     projs.remove(0);//remove the table header
                     projs.remove(0);//remove the table header
                     int n = (h * PROJECTS_PER_PAGE) - PROJECTS_PER_PAGE;//iterator over all projects on all pages
-                    o.println("Thread "+threadNum+" starting page "+h+" ("+n+
+                    o.println("Thread "+threadNum+" getting page "+h+"/"+numPages+" ("+n+
                         "-"+(n-PROJECTS_PER_PAGE)+")");
                     for(int i = 0; i < projs.size(); i++)
                     {
