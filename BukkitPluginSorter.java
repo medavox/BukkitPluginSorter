@@ -51,22 +51,26 @@ public class BukkitPluginSorter implements Runnable
     private boolean doingDownloads = true;//false:populate projects array; true:get their download numbers
     private String url;//the url 'argument' passed to the getProjectEntries threads
     
-    public BukkitPluginSorter(String releaseURL, String releasePrettyName)
+    /**Calls each individual step's method. Writes the resultant HTML
+     * document to a file, based on which stage we selected.
+     * @param URL the project results page to scan
+     * @param stagePrettyName The pretty-print name of the stage we're scanning, eg. "Mature" */
+    public BukkitPluginSorter(String URL, String stagePrettyName)
     {
-        numEntries = getNumEntries(releaseURL);//total number of projects
-        url = releaseURL;//thread 'argument': passes the URL we parse later
+        numEntries = getNumEntries(URL);//total number of projects
+        url = URL;//thread 'argument': passes the URL we parse later
         o.println("getting project entries...");
-        getProjectEntries(releaseURL);//get names, links and descriptions - THREADED
+        getProjectEntries(URL);//get names, links and descriptions - THREADED
         
         o.println("getting Number of Downloads...");
         getNumDownloads();//get num downloads - THREADED!
         o.println("sorting...");
         quickSort(projects, 0, projects.length-1);//sort results
-        String output = generateHTML(projects, releasePrettyName);
+        String output = generateHTML(projects, stagePrettyName);
         
         try
         {
-            File file = new File(releasePrettyName+".html");
+            File file = new File(stagePrettyName+".html");
             if(!file.exists())
             {
                 file.createNewFile();
@@ -84,12 +88,17 @@ public class BukkitPluginSorter implements Runnable
     
     /*threaded http requests are the new black.
      * also run() is the new getProjectEntries().*/
+     /**The main worker thread method. Depending on the state of doingDownloads,
+      * Either spawns NUM_THREADS number of threads to (false): parallely retrieve
+      *  and parse each page of results from the URL in url,
+      * or (true), access each project's page and retrieve its number of downloads.*/
     public void run()
     {
-        lastThread++;
-        int threadNum = lastThread;
+        lastThread++;//thread numbers start from 1
+        int threadNum = lastThread;//thread number affects which chunk of data that thread processes
         if(threadNum == NUM_THREADS)
-        {
+        {/*if there are no more threads to spawn and number, reset this counter
+			for later, when we do run() again*/
             lastThread = 0;
         }
         if(doingDownloads)//getting number of downloads value,
@@ -154,7 +163,7 @@ public class BukkitPluginSorter implements Runnable
                 
                 Element boday;//body on each page of results
                 Elements projs;//'element[]' containing project names
-                Elements descs;
+                Elements descs;//description
                 int pagesDone = 0;
                 for(int h = threadNum; h <= numPages; h+=NUM_THREADS)
                 {
@@ -386,7 +395,12 @@ public class BukkitPluginSorter implements Runnable
         e.printStackTrace();
         System.exit(1);
     }
-	/**Provides the total number of projects*/
+	/**Provides the total number of projects by the results page. This is the
+	 * number we'll be accessing every individual page of, so the more there are,
+	 * the slower we go. This number is obviously affected by the options we provide,
+	 * such as category or project stage to scan.
+	 * @param url the URL to scan
+	 * @return an int of the total number of projects*/
     public static int getNumEntries(String url)
     {
         try
@@ -401,21 +415,25 @@ public class BukkitPluginSorter implements Runnable
             return -1;//pointless, but prevents java complaining about a lack of return statement
         }
     }
+    /**Stores data about each project in a convenient record.
+     * Doesn't bother with java get/set convention, I wrote this in a hurry,
+     * and all those methods slow development down without a big IDE*/
     private class Project
     {
         public String name;
         public String description;
         public String link;
         public int downloads;
-        public String[] categories;
+        public String[] categories;//a project can be in >1 category
     }
-    
+    /**The main method. parses commandline options and passes on respective
+     * arguments to the constructor*/
     public static void main(String[] args)
-    {
+    {/*
         for (int i = 0; i < args.length; i++)
         {
             System.out.println("arg "+i+": "+args[i]);
-        }
+        }*/
         BukkitPluginSorter bukkitParser;
         if(args.length >0)
         {
