@@ -3,7 +3,10 @@ BukkitPluginSorter
 
 Sorts Bukkit plugins by number of downloads.
 
-Outputs a basic html table in a file named after the plugin stage it scans.
+scrapes the plugin list on the dev.bukkit.org page, then
+
+Outputs a basic html table in a file named after the plugin page it scrapes.
+
 eg for listing mature releases, it produces Mature.html
 
 *  Uses jsoup to get and manipulate the html
